@@ -21,8 +21,8 @@ from keras.layers import Conv1D,Conv2D, MaxPooling2D
 from keras.models import Sequential,Model
 from keras.utils.np_utils import to_categorical
 from keras import optimizers
-from keras.optimizers import Adam,SGD
-from keras.layers.normalization import BatchNormalization
+from tensorflow.keras.optimizers import Adam,SGD
+from tensorflow.keras.layers import BatchNormalization
 from keras.regularizers import l2
 import copy
 
