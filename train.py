@@ -3,22 +3,6 @@ import itertools
 import os
 import random
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import numpy as np
-from sklearn import metrics
-from sklearn import preprocessing
-from sklearn.model_selection import train_test_split, KFold, cross_val_score
-
-from keras.layers import Dense, Activation, Flatten, Dropout, Reshape
-from keras.layers import Conv1D,Conv2D, MaxPooling2D
-from keras.models import Sequential,Model
-from keras.utils.np_utils import to_categorical
-from keras import optimizers
-from keras.optimizers import Adam,SGD
-from keras.layers.normalization import BatchNormalization
-from keras.regularizers import l2
 import copy
 
 def train_for_deepphos(train_file_name,site,predictFrame = 'general',background_weight = None):
@@ -57,6 +41,5 @@ def train_for_deepphos(train_file_name,site,predictFrame = 'general',background_
     model = model_net(X_train1, X_train2, X_train3, y_train,
                weights=background_weight)
     model.save_weights(modelname+'.h5',overwrite=True)
-
 
 

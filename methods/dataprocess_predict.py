@@ -1,10 +1,10 @@
 import csv
 import io
 import numpy as np
-import keras.utils.np_utils as kutils
 import re
 import urllib
 import json
+from tensorflow.keras.utils import to_categorical
 
 #input format   label,proteinName, postion,sites, shortsequence,
 #input must be a .csv file
@@ -127,7 +127,7 @@ def getMatrixInputFromJsonPrev(inputText, organism, window_size=51, empty_aa = '
             # all_codings.append(coding)
 
     all_label = [0] *5 + [1]*(len(short_seqs)-5)
-    targetY = kutils.to_categorical(all_label)
+    targetY = to_categorical(all_label)
 
     ONE_HOT_SIZE = 21
     # _aminos = 'ACDEFGHIKLMNPQRSTVWY*'
@@ -175,7 +175,7 @@ def getMatrixInputFromJson(prot, pos, full_names, names, short_seqs,window_size=
 
 
     all_label = [0] *5 + [1]*(len(short_seqs)-5)
-    targetY = kutils.to_categorical(all_label)
+    targetY = to_categorical(all_label)
 
     ONE_HOT_SIZE = 21
     # _aminos = 'ACDEFGHIKLMNPQRSTVWY*'
@@ -270,7 +270,7 @@ def getMatrixInputFromFile(f,sites, window_size=51, empty_aa = '*'):
             # all_codings.append(coding)
 
     all_label = [0] *5 + [1]*(len(short_seqs)-5)
-    targetY = kutils.to_categorical(all_label)
+    targetY = to_categorical(all_label)
 
     ONE_HOT_SIZE = 21
     # _aminos = 'ACDEFGHIKLMNPQRSTVWY*'
@@ -362,7 +362,7 @@ def getMatrixInput(positive_position_file_name,sites, window_size=51, empty_aa =
                 # all_codings.append(coding)
 
         all_label = [0] *5 + [1]*(len(short_seqs)-5)
-        targetY = kutils.to_categorical(all_label)
+        targetY = to_categorical(all_label)
 
         ONE_HOT_SIZE = 21
         # _aminos = 'ACDEFGHIKLMNPQRSTVWY*'
@@ -403,7 +403,6 @@ def getMatrixInput(positive_position_file_name,sites, window_size=51, empty_aa =
             samplenumber = samplenumber + 1
 
     return Matr, targetY, prot, pos
-
 
 
 

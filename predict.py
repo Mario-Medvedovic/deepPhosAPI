@@ -4,27 +4,11 @@ import os
 import random
 import pandas as pd
 import json
-import matplotlib
-matplotlib.use('Agg')
 import csv
-import matplotlib.pyplot as plt
 import numpy as np
 import re
 import urllib
 from flask import Flask, make_response, send_from_directory, request, render_template, url_for, redirect
-from sklearn import metrics
-from sklearn import preprocessing
-from sklearn.model_selection import train_test_split, KFold, cross_val_score
-
-from keras.layers import Dense, Activation, Flatten, Dropout, Reshape
-from keras.layers import Conv1D,Conv2D, MaxPooling2D
-from keras.models import Sequential,Model
-from keras.utils.np_utils import to_categorical
-from keras import optimizers
-from tensorflow.keras.optimizers import Adam,SGD
-from tensorflow.keras.layers import BatchNormalization
-from keras.regularizers import l2
-import copy
 
 
 
@@ -79,10 +63,10 @@ def predict_for_deepphos(file_name,sites,predictFrame = 'general',
     #load model weight
     if predictFrame == 'general':
 
-        if site == ('S','T'):
+        if sites == ('S','T'):
             outputfile = 'general_S_T'
             model_weight = './models/model_general_S,T.h5'
-        if site == 'Y':
+        if sites == 'Y':
             outputfile = 'general_Y'
             model_weight = './models/model_general_Y.h5'
 
@@ -557,7 +541,6 @@ if __name__ == '__main__':
     # threaded should be false to reload the weights in
     app.run(host='0.0.0.0', debug=False, threaded=False)
     #app.run(debug=True, use_reloader=False)
-
 
 
 

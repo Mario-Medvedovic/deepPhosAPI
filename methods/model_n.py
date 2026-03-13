@@ -3,22 +3,7 @@ import itertools
 import os
 import random
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import numpy as np
-from sklearn import metrics
-from sklearn import preprocessing
-from sklearn.model_selection import train_test_split, KFold, cross_val_score
-from keras.layers import Dense, Activation, Flatten, Dropout, Reshape
-from keras.layers import Conv1D, Conv2D, MaxPooling2D
-from keras.models import Sequential, Model
-from keras.utils.np_utils import to_categorical
-from keras import optimizers
-from keras.optimizers import Adam, SGD
-from keras.layers.normalization import BatchNormalization
-from keras.regularizers import l2
-import copy
+from tensorflow.keras.optimizers import Adam
 
 
 def model_net(X_train1, X_train2, X_train3, y_train,
@@ -61,7 +46,7 @@ def model_net(X_train1, X_train2, X_train3, y_train,
     # Model output
 
     # choose optimazation
-    opt = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+    opt = Adam(learning_rate=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 
     # model compile
     model.compile(loss='binary_crossentropy',
