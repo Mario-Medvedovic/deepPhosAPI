@@ -56,9 +56,12 @@ def getMatrixInputFromJsonPrev(inputText, organism, window_size=51, empty_aa = '
 
 
             except:
-                protein_info[protein]["sequence"] = "*"
-
-                protein_info[protein]["gene"] = "*"
+                protein_info[protein] = {
+                    "sequence": "*",
+                    "primary_gene_name": ["*"]
+                }
+                sseq = protein_info[protein]["sequence"]
+                gene = protein_info[protein]["primary_gene_name"][0]
 
 
         else:
@@ -403,7 +406,6 @@ def getMatrixInput(positive_position_file_name,sites, window_size=51, empty_aa =
             samplenumber = samplenumber + 1
 
     return Matr, targetY, prot, pos
-
 
 
 

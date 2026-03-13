@@ -240,9 +240,12 @@ def predict_for_deepphos_from_json(input, organism):
 
 
             except:
-                protein_info[protein]["sequence"] = "*"
-
-                protein_info[protein]["gene"] = "*"
+                protein_info[protein] = {
+                    "sequence": "*",
+                    "primary_gene_name": ["*"]
+                }
+                sseq = protein_info[protein]["sequence"]
+                gene = protein_info[protein]["primary_gene_name"][0]
 
 
         else:
@@ -541,6 +544,5 @@ if __name__ == '__main__':
     # threaded should be false to reload the weights in
     app.run(host='0.0.0.0', debug=False, threaded=False)
     #app.run(debug=True, use_reloader=False)
-
 
 
