@@ -1,6 +1,6 @@
 import csv
 import numpy as np
-import keras.utils.np_utils as kutils
+from tensorflow.keras.utils import to_categorical
 
 #input format   label,proteinName, postion,sites, shortsequence,
 #input must be a .csv file
@@ -55,7 +55,7 @@ def getMatrixLabel(positive_position_file_name,sites, window_size=51, empty_aa =
                 # coding = one_hot_concat(shortseq)
                 # all_codings.append(coding)
 
-        targetY = kutils.to_categorical(all_label)
+        targetY = to_categorical(all_label)
 
         ONE_HOT_SIZE = 21
         # _aminos = 'ACDEFGHIKLMNPQRSTVWY*'
@@ -93,7 +93,6 @@ def getMatrixLabel(positive_position_file_name,sites, window_size=51, empty_aa =
             samplenumber = samplenumber + 1
 
     return Matr, targetY
-
 
 
 

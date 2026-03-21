@@ -1,13 +1,6 @@
-from keras.models import Model
-from keras.layers.core import Dense, Dropout, Activation
-from keras.layers.convolutional import Convolution2D
-from keras.layers.pooling import AveragePooling2D, AveragePooling1D
-from keras.layers.pooling import GlobalAveragePooling2D,GlobalAveragePooling1D
-from keras.layers import Input, merge, Flatten
-from keras.layers.normalization import BatchNormalization
-from keras.regularizers import l2
-import keras.backend as K
-from keras.layers import Conv1D,Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Activation, AveragePooling1D, Conv1D, Dense, Dropout, Flatten, Input, concatenate
+from tensorflow.keras.models import Model
+from tensorflow.keras.regularizers import l2
 
 
 def conv_factory(x, init_form, nb_filter, filter_size_block, dropout_rate=None, weight_decay=1E-4):
@@ -23,11 +16,11 @@ def conv_factory(x, init_form, nb_filter, filter_size_block, dropout_rate=None, 
     """
     #x = Activation('relu')(x)
     x = Conv1D(nb_filter, filter_size_block,
-                      init=init_form,
+                      kernel_initializer=init_form,
                       activation='relu',
-                      border_mode='same',
-                      bias=False,
-                      W_regularizer=l2(weight_decay))(x)
+                      padding='same',
+                      use_bias=False,
+                      kernel_regularizer=l2(weight_decay))(x)
     if dropout_rate:
         x = Dropout(dropout_rate)(x)
 
@@ -48,11 +41,11 @@ def transition(x, init_form, nb_filter, dropout_rate=None, weight_decay=1E-4):
     """
     #x = Activation('relu')(x)
     x = Conv1D(nb_filter, 1,
-                      init=init_form,
+                      kernel_initializer=init_form,
                       activation='relu',
-                      border_mode='same',
-                      bias=False,
-                      W_regularizer=l2(weight_decay))(x)
+                      padding='same',
+                      use_bias=False,
+                      kernel_regularizer=l2(weight_decay))(x)
     if dropout_rate:
         x = Dropout(dropout_rate)(x)
     #x = AveragePooling2D((2, 2),padding='same')(x)
@@ -84,7 +77,7 @@ def denseblock(x, init_form, nb_layers, nb_filter, growth_rate,filter_size_block
     for i in range(nb_layers):
         x = conv_factory(x, init_form, growth_rate, filter_size_block, dropout_rate, weight_decay)
         list_feat.append(x)
-        x = merge(list_feat, mode='concat', concat_axis=concat_axis)
+        x = concatenate(list_feat, axis=concat_axis)
         nb_filter += growth_rate
     return x
 
@@ -115,11 +108,11 @@ def Phos(nb_classes, nb_layers,img_dim1,img_dim2,img_dim3, init_form, nb_dense_b
     #model_input = Input(shape=img_dim)
     # Initial convolution
     x1 = Conv1D(nb_filter, filter_size_ori,
-                      init = init_form,
+                      kernel_initializer=init_form,
                       activation='relu',
-                      border_mode='same',
-                      bias=False,
-                      W_regularizer=l2(weight_decay))(main_input)
+                      padding='same',
+                      use_bias=False,
+                      kernel_regularizer=l2(weight_decay))(main_input)
 
     # Add dense blocks
     for block_idx in range(nb_dense_block - 1):
@@ -140,11 +133,11 @@ def Phos(nb_classes, nb_layers,img_dim1,img_dim2,img_dim3, init_form, nb_dense_b
     # second input of 21 seq #
     input2 = Input(shape=img_dim2)
     x2 = Conv1D(nb_filter, filter_size_ori,
-                init=init_form,
+                kernel_initializer=init_form,
                 activation='relu',
-                border_mode='same',
-                bias=False,
-                W_regularizer=l2(weight_decay))(input2)
+                padding='same',
+                use_bias=False,
+                kernel_regularizer=l2(weight_decay))(input2)
 
     # Add dense blocks
     for block_idx in range(nb_dense_block - 1):
@@ -165,11 +158,11 @@ def Phos(nb_classes, nb_layers,img_dim1,img_dim2,img_dim3, init_form, nb_dense_b
     #third input seq of 15 #
     input3 = Input(shape=img_dim3)
     x3 = Conv1D(nb_filter, filter_size_ori,
-                init=init_form,
+                kernel_initializer=init_form,
                 activation='relu',
-                border_mode='same',
-                bias=False,
-                W_regularizer=l2(weight_decay))(input3)
+                padding='same',
+                use_bias=False,
+                kernel_regularizer=l2(weight_decay))(input3)
 
     # Add dense blocks
     for block_idx in range(nb_dense_block - 1):
@@ -188,7 +181,7 @@ def Phos(nb_classes, nb_layers,img_dim1,img_dim2,img_dim3, init_form, nb_dense_b
     x3 = Activation('relu')(x3)
 
     # contact 3 output features #
-    x = merge([x1, x2, x3], mode='concat', concat_axis=-2, name='contact_multi_seq')
+    x = concatenate([x1, x2, x3], axis=-2, name='contact_multi_seq')
 
     #x = GlobalAveragePooling1D()(x)
 
@@ -196,19 +189,19 @@ def Phos(nb_classes, nb_layers,img_dim1,img_dim2,img_dim3, init_form, nb_dense_b
 
     x = Dense(dense_number,
               name ='Dense_1',
-              activation='relu',init = init_form,
-              W_regularizer=l2(weight_decay),
-              b_regularizer=l2(weight_decay))(x)
+              activation='relu', kernel_initializer=init_form,
+              kernel_regularizer=l2(weight_decay),
+              bias_regularizer=l2(weight_decay))(x)
 
     x = Dropout(dropout_dense)(x)
     #softmax
     x = Dense(nb_classes,
               name = 'Dense_softmax',
-              activation='softmax',init = init_form,
-              W_regularizer=l2(weight_decay),
-              b_regularizer=l2(weight_decay))(x)
+              activation='softmax', kernel_initializer=init_form,
+              kernel_regularizer=l2(weight_decay),
+              bias_regularizer=l2(weight_decay))(x)
 
-    phos_model = Model(input=[main_input,input2,input3], output=[x], name="multi-DenseNet")
+    phos_model = Model(inputs=[main_input, input2, input3], outputs=[x], name="multi-DenseNet")
     #feauture_dense = Model(input=[main_input, input2, input3], output=[x], name="multi-DenseNet")
 
     return phos_model

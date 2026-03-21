@@ -4,27 +4,17 @@ import os
 import random
 import pandas as pd
 import json
-import matplotlib
-matplotlib.use('Agg')
 import csv
-import matplotlib.pyplot as plt
 import numpy as np
 import re
+import traceback
 import urllib
 from flask import Flask, make_response, send_from_directory, request, render_template, url_for, redirect
-from sklearn import metrics
-from sklearn import preprocessing
-from sklearn.model_selection import train_test_split, KFold, cross_val_score
 
-from keras.layers import Dense, Activation, Flatten, Dropout, Reshape
-from keras.layers import Conv1D,Conv2D, MaxPooling2D
-from keras.models import Sequential,Model
-from keras.utils.np_utils import to_categorical
-from keras import optimizers
-from tensorflow.keras.optimizers import Adam,SGD
-from tensorflow.keras.layers import BatchNormalization
-from keras.regularizers import l2
-import copy
+UNIPROT_API_BASE = os.environ.get(
+    "DEEPPHOS_UNIPROT_API_BASE",
+    "http://127.0.0.1:8091/pln/api/uniprotdb/organism/{}/accession/{}",
+)
 
 
 
@@ -79,10 +69,10 @@ def predict_for_deepphos(file_name,sites,predictFrame = 'general',
     #load model weight
     if predictFrame == 'general':
 
-        if site == ('S','T'):
+        if sites == ('S','T'):
             outputfile = 'general_S_T'
             model_weight = './models/model_general_S,T.h5'
-        if site == 'Y':
+        if sites == 'Y':
             outputfile = 'general_Y'
             model_weight = './models/model_general_Y.h5'
 
@@ -180,8 +170,11 @@ def predict_for_deepphos_from_json_prev(input, organism):
 
             # result.to_csv(outputfile + "_api_prediction_phosphorylation.txt", index=False, header=None, sep='\t',
             #               quoting=csv.QUOTE_NONNUMERIC)
-        except:
+        except Exception as e:
             print("there was an error")
+            print("kinase:", kin)
+            print("exception:", repr(e))
+            traceback.print_exc()
             result_json[kin] = json.dumps([{'target':"", 'full_name':"", 'position':"", 'score':""}])
 
     print(result_json)
@@ -243,7 +236,7 @@ def predict_for_deepphos_from_json(input, organism):
         input_center = str(modification.split("@")[0])[-1]
 
         if protein not in protein_info.keys():
-            url2 = "http://eh3.uc.edu/pinet/api/uniprotdb/organism/{}/accession/{}".format(organism, protein)
+            url2 = UNIPROT_API_BASE.format(organism, protein)
             try:
                 with urllib.request.urlopen(url2) as url:
                     response2 = json.loads(url.read().decode())
@@ -256,9 +249,12 @@ def predict_for_deepphos_from_json(input, organism):
 
 
             except:
-                protein_info[protein]["sequence"] = "*"
-
-                protein_info[protein]["gene"] = "*"
+                protein_info[protein] = {
+                    "sequence": "*",
+                    "primary_gene_name": ["*"]
+                }
+                sseq = protein_info[protein]["sequence"]
+                gene = protein_info[protein]["primary_gene_name"][0]
 
 
         else:
@@ -329,6 +325,15 @@ def predict_for_deepphos_from_json(input, organism):
                 # coding = one_hot_concat(shortseq)
                 # all_codings.append(coding)
 
+    if len(prot) == 0:
+        empty_result = {}
+        for kin in ['family_CDK','family_CK2','family_MAPK','family_PKC','family_Src',
+                    'group_AGC','group_Atypical','group_CAMK','group_CMGC','group_TK',
+                    'kinase_CDC2','kinase_CK2a1','kinase_PKACa','kinase_PKCa','kinase_SRC',
+                    'subfamily_CDC2','subfamily_CDK2','subfamily_ERK1','subfamily_PKCa']:
+            empty_result[kin] = json.dumps([{'target':"", 'name':"", 'full_name':"", 'position':"", 'score':""}])
+        return json.dumps(empty_result)
+
     from methods.dataprocess_predict import getMatrixInputFromJson
     print('running X_test1 ----------------------------')
     [X_test1,y_test,ids,position,full_names,names] = getMatrixInputFromJson(prot, pos, full_names, names, short_seqs[0], win1)
@@ -373,7 +378,7 @@ def predict_for_deepphos_from_json(input, organism):
 
         try:
             model.load_weights(model_weight)
-            predictions_t = model.predict([X_test1, X_test2, X_test3])
+            predictions_t = model.predict([X_test1, X_test2, X_test3], verbose=0)
 
             results_ST = np.column_stack((ids, names, full_names ,position,predictions_t[:, 1]))
 
@@ -388,8 +393,11 @@ def predict_for_deepphos_from_json(input, organism):
 
             # result.to_csv(outputfile + "_api_prediction_phosphorylation.txt", index=False, header=None, sep='\t',
             #               quoting=csv.QUOTE_NONNUMERIC)
-        except:
+        except Exception as e:
             print("there was an error")
+            print("kinase:", kin)
+            print("exception:", repr(e))
+            traceback.print_exc()
             result_json[kin] = json.dumps([{'target':"", 'name':"", 'full_name':"", 'position':"", 'score':""}])
 
     print(result_json)
@@ -475,8 +483,11 @@ def predict_for_deepphos_from_file(file,sites):
 
                 # result.to_csv(outputfile + "_api_prediction_phosphorylation.txt", index=False, header=None, sep='\t',
                 #               quoting=csv.QUOTE_NONNUMERIC)
-    except:
+    except Exception as e:
          print("there was an error")
+         print("kinase:", kin)
+         print("exception:", repr(e))
+         traceback.print_exc()
          result_json[kin] = []
 
     print(result_json)
@@ -557,7 +568,3 @@ if __name__ == '__main__':
     # threaded should be false to reload the weights in
     app.run(host='0.0.0.0', debug=False, threaded=False)
     #app.run(debug=True, use_reloader=False)
-
-
-
-
