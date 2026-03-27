@@ -4,7 +4,21 @@ import numpy as np
 import re
 import urllib
 import json
+import os
 from tensorflow.keras.utils import to_categorical
+
+UNIPROT_API_BASE = os.environ.get(
+    "DEEPPHOS_UNIPROT_API_BASE",
+    "http://127.0.0.1:8090/api/uniprotdb/organism",
+).rstrip("/")
+
+
+def build_uniprot_url(organism, protein):
+    return "{}/{}/accession/{}".format(
+        UNIPROT_API_BASE,
+        urllib.parse.quote(str(organism), safe=""),
+        urllib.parse.quote(str(protein), safe=""),
+    )
 
 #input format   label,proteinName, postion,sites, shortsequence,
 #input must be a .csv file
@@ -43,7 +57,7 @@ def getMatrixInputFromJsonPrev(inputText, organism, window_size=51, empty_aa = '
         input_center = str(modification.split("@")[0])[-1]
 
         if protein not in protein_info.keys():
-            url2 = "http://eh3.uc.edu/pinet/api/uniprotdb/organism/{}/accession/{}".format(organism, protein)
+            url2 = build_uniprot_url(organism, protein)
             try:
                 with urllib.request.urlopen(url2) as url:
                     response2 = json.loads(url.read().decode())
@@ -406,7 +420,6 @@ def getMatrixInput(positive_position_file_name,sites, window_size=51, empty_aa =
             samplenumber = samplenumber + 1
 
     return Matr, targetY, prot, pos
-
 
 
 

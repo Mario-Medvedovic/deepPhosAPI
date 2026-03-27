@@ -13,8 +13,16 @@ from flask import Flask, make_response, send_from_directory, request, render_tem
 
 UNIPROT_API_BASE = os.environ.get(
     "DEEPPHOS_UNIPROT_API_BASE",
-    "http://127.0.0.1:8091/pln/api/uniprotdb/organism/{}/accession/{}",
-)
+    "http://127.0.0.1:8090/api/uniprotdb/organism",
+).rstrip("/")
+
+
+def build_uniprot_url(organism, protein):
+    return "{}/{}/accession/{}".format(
+        UNIPROT_API_BASE,
+        urllib.parse.quote(str(organism), safe=""),
+        urllib.parse.quote(str(protein), safe=""),
+    )
 
 
 
@@ -225,18 +233,25 @@ def predict_for_deepphos_from_json(input, organism):
     print("==========================")
     for row in inputItems:
         print(row)
-        modification = re.match(r"[^[]*\[([^]]*)\]", row).groups()[0]
-        # print(re.match(r"[^[]*\[([^]]*)\]", row))
-        print(modification)
         sseq = ""
         position = 0
         center = 0
-        protein = row.split("[")[0]
-        position = int(modification.split("@")[1])
-        input_center = str(modification.split("@")[0])[-1]
+
+        # Accept both legacy DeepPhos input like P51812[pS@369] and
+        # PiNET input like P51812{[pS]@369}.
+        match = re.match(r"^([^{\[]+)(?:\{\[(?:ph|p)?([A-Z])\]@(\d+)\}|\[(?:ph|p)?([A-Z])@(\d+)\])$", row)
+        if not match:
+            print("Invalid PTM input:", row)
+            continue
+
+        protein = match.group(1)
+        input_center = match.group(2) or match.group(4)
+        position = int(match.group(3) or match.group(5))
+        modification = input_center + "@" + str(position)
+        print(modification)
 
         if protein not in protein_info.keys():
-            url2 = UNIPROT_API_BASE.format(organism, protein)
+            url2 = build_uniprot_url(organism, protein)
             try:
                 with urllib.request.urlopen(url2) as url:
                     response2 = json.loads(url.read().decode())
@@ -244,7 +259,6 @@ def predict_for_deepphos_from_json(input, organism):
 
                     sseq = response2["sequence"]
                     protein_info[protein] = response2
-                    center = sseq[position - 1]
                     gene = response2["primary_gene_name"][0]
 
 
@@ -260,7 +274,12 @@ def predict_for_deepphos_from_json(input, organism):
         else:
             sseq = protein_info[protein]["sequence"]
             gene = protein_info[protein]["primary_gene_name"][0]
-            center = sseq[position - 1]
+
+        if not isinstance(sseq, str) or position < 1 or position > len(sseq):
+            print("Skipping invalid DeepPhos site:", protein, position, "sequence_length=", len(sseq) if isinstance(sseq, str) else "n/a")
+            continue
+
+        center = sseq[position - 1]
 
         # response = urllib.urlopen(url)
         #
