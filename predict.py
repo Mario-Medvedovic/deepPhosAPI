@@ -8,7 +8,8 @@ import csv
 import numpy as np
 import re
 import traceback
-import urllib
+import urllib.parse
+import urllib.request
 from flask import Flask, make_response, send_from_directory, request, render_template, url_for, redirect
 
 UNIPROT_API_BASE = os.environ.get(
@@ -261,8 +262,8 @@ def predict_for_deepphos_from_json(input, organism):
                     protein_info[protein] = response2
                     gene = response2["primary_gene_name"][0]
 
-
-            except:
+            except Exception as exc:
+                print("DeepPhos UniProt fetch failed:", protein, url2, repr(exc))
                 protein_info[protein] = {
                     "sequence": "*",
                     "primary_gene_name": ["*"]

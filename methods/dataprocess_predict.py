@@ -2,7 +2,8 @@ import csv
 import io
 import numpy as np
 import re
-import urllib
+import urllib.parse
+import urllib.request
 import json
 import os
 from tensorflow.keras.utils import to_categorical
@@ -69,7 +70,8 @@ def getMatrixInputFromJsonPrev(inputText, organism, window_size=51, empty_aa = '
                     gene = response2["primary_gene_name"][0]
 
 
-            except:
+            except Exception as exc:
+                print("DeepPhos UniProt fetch failed:", protein, url2, repr(exc))
                 protein_info[protein] = {
                     "sequence": "*",
                     "primary_gene_name": ["*"]
@@ -420,7 +422,6 @@ def getMatrixInput(positive_position_file_name,sites, window_size=51, empty_aa =
             samplenumber = samplenumber + 1
 
     return Matr, targetY, prot, pos
-
 
 
 
